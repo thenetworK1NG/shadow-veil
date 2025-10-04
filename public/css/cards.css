@@ -46,8 +46,9 @@
 /* Reduce complexity for mobile devices and touch interfaces */
 @media (hover: none) and (pointer: coarse) {
   .card {
-    /* Simplify transforms for touch devices */
-    transform: perspective(1000px) scale(var(--card-scale, 1)) !important;
+    /* Allow tilt transforms for mobile while keeping performance optimizations */
+    transform: perspective(1000px) rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg)) scale(var(--card-scale, 1)) !important;
+    will-change: transform; /* Focus optimization on transforms only */
   }
   
   .card__shine,

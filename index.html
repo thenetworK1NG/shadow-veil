@@ -40,9 +40,9 @@
     /* Mobile optimizations for better performance */
     @media (max-width: 768px), (hover: none) {
       .card {
-        /* Allow tilt but reduce complexity on mobile */
+        /* Allow tilt but optimize other properties */
         transform: perspective(1000px) rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg)) scale(var(--card-scale, 1));
-        will-change: transform; /* Only track transforms on mobile */
+        will-change: transform; /* Only optimize transforms */
       }
       
       .card__shine,
@@ -65,9 +65,10 @@
     
     /* Enhanced mobile optimizations using class-based detection */
     .is-mobile .card {
-      /* Allow tilt transforms on mobile but simplify perspective */
+      /* Allow tilt transforms but with hardware acceleration */
       transform: perspective(1000px) rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg)) scale(var(--card-scale, 1));
-      will-change: transform; /* Only track transform changes on mobile */
+      will-change: transform; /* Only transform, not other expensive properties */
+      transition: transform 0.1s ease-out; /* Smooth but fast transitions */
     }
     
     .is-mobile .card__shine {
@@ -351,28 +352,25 @@
         // Add mobile class for CSS targeting
         document.documentElement.classList.add('is-mobile');
         
-        // Mobile interaction with tilt but simplified holo effects
+        // Mobile-optimized interaction - includes tilt but simplified holo
         function mobileInteract(e) {
-          interacting = true;
           if (card.classList.contains('is-flipped')) {
             setVars({ '--card-opacity': 0 });
             return;
           }
           
           const rect = rotator.getBoundingClientRect();
-          const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
-          const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+          const clientX = (e.touches? e.touches[0].clientX : e.clientX);
+          const clientY = (e.touches? e.touches[0].clientY : e.clientY);
           const x = clamp(((clientX - rect.left) / rect.width) * 100);
           const y = clamp(((clientY - rect.top) / rect.height) * 100);
 
           const cx = x - 50;
           const cy = y - 50;
 
-          // Keep the tilt calculations for mobile
-          const bgX = round(adjust(x, 0, 100, 37, 63));
-          const bgY = round(adjust(y, 0, 100, 33, 67));
-          const rotX = round(-(cx / 3.5));
-          const rotY = round(cy / 2);
+          // Keep tilt calculations but reduce intensity for mobile
+          const rotX = round(-(cx / 5)); // Reduced from 3.5 to 5 for gentler tilt
+          const rotY = round(cy / 3.5); // Reduced from 2 to 3.5 for gentler tilt
           const pLeft = round(x) / 100;
           const pTop = round(y) / 100;
           const pCenter = clamp(Math.sqrt((y - 50) * (y - 50) + (x - 50) * (x - 50)) / 50, 0, 1);
@@ -380,18 +378,18 @@
           setVars({
             '--pointer-x': x + '%',
             '--pointer-y': y + '%',
-            '--background-x': bgX + '%',
-            '--background-y': bgY + '%',
-            '--rotate-x': rotX + 'deg', // Keep tilt on mobile
-            '--rotate-y': rotY + 'deg', // Keep tilt on mobile
-            '--card-opacity': 0.7, // Reduced holo opacity for performance
+            '--background-x': '50%', // Simplified background positioning
+            '--background-y': '50%',
+            '--rotate-x': rotX + 'deg', // Keep the tilt!
+            '--rotate-y': rotY + 'deg', // Keep the tilt!
+            '--card-opacity': 0.6, // Reduced holo opacity for performance
             '--pointer-from-left': pLeft,
             '--pointer-from-top': pTop,
             '--pointer-from-center': pCenter
           });
         }
         
-        // Use touchmove for continuous tracking (but with simplified CSS effects)
+        // Use touchmove for continuous tracking on mobile (but with simplified effects)
         rotator.addEventListener('touchstart', mobileInteract, { passive: true });
         rotator.addEventListener('touchmove', mobileInteract, { passive: true });
         rotator.addEventListener('touchend', interactEnd, { passive: true });
