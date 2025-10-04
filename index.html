@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pokémon Card Holo Demo (Single)</title>
+  <link rel="icon" href="./public/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;700&family=Roboto:wght@300;700&display=swap">
+  <!-- Use demo-local CSS assets -->
+  <link rel="stylesheet" href="./public/css/global.css" />
+  <link rel="stylesheet" href="./public/css/cards/base.css" />
+  <link rel="stylesheet" href="./public/css/cards.css" />
+  <link rel="stylesheet" href="./public/css/cards/basic.css" />
+  <link rel="stylesheet" href="./public/css/cards/regular-holo.css" />
+  <link rel="stylesheet" href="./public/css/cards/cosmos-holo.css" />
+  <style>
+    /* Small layout helpers for the standalone card page */
+    :root{
+      --page-bg: hsl(220, 7%, 24%);
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--page-bg);
+      display: grid;
+      place-items: center;
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+    }
+    .frame {
+      width: min(92vw, 480px);
+    }
+    .card {
+      width: 100%;
+    }
+  /* 3D flip: rotate the rotator to 180deg for the back view */
+  .card { --flip-rotation: 0deg; }
+  .card.is-flipped { --flip-rotation: 180deg; }
+  /* animate the flip rotation smoothly */
+  .card.is-animating .card__rotator { transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), -webkit-transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+  /* ensure backface is visible for the back image and hidden for the front */
+  .card__back { backface-visibility: visible; }
+  .card__front, .card__front * { backface-visibility: hidden; }
+    /* Ensure art layer gets the mask/holo, frame sits above without holo */
+    .art-layer, .frame-layer { position: relative; display: grid; grid-area: 1/1; }
+    .card__front { display: grid; }
+    .frame-layer { z-index: 5; }
+    .art-layer { z-index: 1; }
+  /* Glitter holo overlay for the frame (masked to frame PNG) */
+    .frame-layer::after {
+      content: "";
+      grid-area: 1/1;
+      position: relative;
+      z-index: 6;
+      pointer-events: none;
+      /* glitter-only holo with subtle specular highlight (pointer reactive) */
+      background-image:
+        url('./public/img/glitter.png'),
+        url('./public/img/glitter.png'),
+        radial-gradient(
+          farthest-corner circle at var(--pointer-x) var(--pointer-y),
+          rgba(255,255,255,0.18) 0%,
+          rgba(0,0,0,0.0) 45%,
+          rgba(0,0,0,0.0) 100%
+        );
+      background-size: 18%, 45%, cover;
+      background-position:
+        calc( 20% + ( var(--pointer-from-left) * 60% ) ) calc( 20% + ( var(--pointer-from-top) * 60% ) ),
+        calc( 80% - ( var(--pointer-from-left) * 60% ) ) calc( 80% - ( var(--pointer-from-top) * 60% ) ),
+        center center;
+      background-blend-mode: screen, screen, normal;
+      mix-blend-mode: screen;
+      filter: brightness(1.04) contrast(1.3) saturate(1);
+  opacity: calc( var(--frame-holo-opacity) * (0.5 + (var(--pointer-from-center, 0) * 0.5)) );
+      /* Clip the rainbow effect to the frame silhouette */
+  -webkit-mask-image: var(--frame-mask);
+      mask-image: var(--frame-mask);
+      -webkit-mask-size: cover;
+      mask-size: cover;
+      -webkit-mask-position: center center;
+      mask-position: center center;
+    }
+  /* Additional cosmic overlay to enhance starry look (masked to art) */
+    .art-layer::after {
+      content: "";
+      grid-area: 1/1;
+      position: relative;
+      z-index: 2;
+      pointer-events: none;
+      background-image:
+        url('./public/img/cosmos-top.png'),
+        url('./public/img/cosmos-middle.gif'),
+        radial-gradient(
+          farthest-corner circle at var(--pointer-x) var(--pointer-y),
+          rgba(255,255,255,0.25) 0%,
+          rgba(0,0,0,0.0) 45%,
+          rgba(0,0,0,0.0) 100%
+        );
+      background-size: cover, 140% 140%, cover;
+      background-position: var(--cosmosbg, center center), calc( 15% + ( var(--pointer-from-left) * 70% ) ) calc( 15% + ( var(--pointer-from-top) * 70% ) ), center center;
+      background-blend-mode: screen, screen, normal;
+      mix-blend-mode: screen;
+      opacity: 0.22;
+      /* Clip overlay to art silhouette */
+      -webkit-mask-image: var(--mask);
+      mask-image: var(--mask);
+      -webkit-mask-size: cover;
+      mask-size: cover;
+      -webkit-mask-position: center center;
+      mask-position: center center;
+    }
+
+    /* Attenuate holo a touch (local, subtle) */
+    .card .card__shine { opacity: calc(var(--card-opacity) * 0.85); }
+    .card .card__glare { opacity: calc(var(--card-opacity) * 0.7); }
+    .card[data-rarity="rare holo cosmos"] .card__shine { filter: brightness(1.0) contrast(1.6) saturate(0.95); }
+    /* Also mask glare to the art area for a clean frame */
+    .card.masked .card__glare {
+      -webkit-mask-image: var(--mask);
+      mask-image: var(--mask);
+      -webkit-mask-size: cover;
+      mask-size: cover;
+      -webkit-mask-position: center center;
+      mask-position: center center;
+    }
+
+    /* Remove cosmos clip limits so holo covers the full art area */
+    .card[data-rarity="rare holo cosmos"] .card__shine,
+    .card[data-rarity="rare holo cosmos"] .card__shine::before,
+    .card[data-rarity="rare holo cosmos"] .card__shine::after,
+    .card[data-rarity="rare holo cosmos"] .card__glare,
+    .card[data-rarity="rare holo cosmos"] .card__glare::before,
+    .card[data-rarity="rare holo cosmos"] .card__glare::after {
+      clip-path: none !important;
+    }
+    /* Ensure shine is masked to the art silhouette fully */
+    .card.masked .card__shine,
+    .card.masked .card__shine::before,
+    .card.masked .card__shine::after {
+      -webkit-mask-image: var(--mask);
+      mask-image: var(--mask);
+      -webkit-mask-size: cover;
+      mask-size: cover;
+      -webkit-mask-position: center center;
+      mask-position: center center;
+    }
+
+    /* Simple flip button styling */
+    .controls { display: grid; place-items: center; margin-top: 12px; }
+    .flip-btn { 
+      appearance: none; border: 0; border-radius: 8px; padding: 10px 14px; 
+      font: 600 14px/1 Roboto, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+      background: linear-gradient(180deg, #2b2f3a, #20232b);
+      color: #e6e9ef; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.35);
+    }
+    .flip-btn:hover { filter: brightness(1.05); }
+    .flip-btn:active { transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <!-- Single interactive card -->
+  <div class="card interactive masked" data-rarity="rare holo cosmos" data-subtypes="basic" data-supertype="pokémon" style="--card-scale:1; --pointer-x:50%; --pointer-y:50%; --card-opacity:0; --translate-x:0px; --translate-y:0px; --rotate-x:0deg; --rotate-y:0deg; --background-x:50%; --background-y:50%; --mask: url('./card/cosmic/1/kard%20art.png'); --frame-mask: url('./card/cosmic/1/kard%20frame.png'); --frame-holo-opacity: 0.18;">
+      <div class="card__translater">
+        <button class="card__rotator" aria-label="Expand the Pokemon Card" tabindex="0">
+          <img class="card__back" src="./card/back.png" alt="Card back" width="660" height="921" loading="lazy" />
+          <div class="card__front" style="--seedx:.3; --seedy:.7; --cosmosbg: 250px 420px;">
+            <!-- Art layer: receives holographic effect -->
+            <div class="art-layer">
+              <img src="./card/cosmic/1/kard%20label.png" alt="Card label" width="660" height="921" loading="lazy" />
+              <img src="./card/cosmic/1/kard%20art.png" alt="Card art" width="660" height="921" loading="lazy" />
+              <div class="card__shine"></div>
+              <div class="card__glare"></div>
+            </div>
+            <!-- Frame layer: sits on top, no holo -->
+            <div class="frame-layer">
+              <img src="./card/cosmic/1/kard%20frame.png" alt="Card frame" width="660" height="921" loading="lazy" />
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="flipBtn" class="flip-btn" aria-pressed="false" aria-label="Show card back">Show back</button>
+    </div>
+  </main>
+
+  <script>
+    // Minimal interactivity to match the core of the main effect for a single card
+    (function(){
+      const card = document.querySelector('.card');
+      const rotator = document.querySelector('.card__rotator');
+  const flipBtn = document.getElementById('flipBtn');
+      if(!card || !rotator) return;
+
+      let interacting = false;
+
+      const clamp = (n, min = 0, max = 100) => Math.max(min, Math.min(max, n));
+      const round = (n) => Math.round(n * 100) / 100;
+      const adjust = (n, inMin, inMax, outMin, outMax) => outMin + ( (n - inMin) * (outMax - outMin) ) / (inMax - inMin);
+
+      function setVars(vars){
+        const style = card.style;
+        for(const k in vars){
+          style.setProperty(k, vars[k]);
+        }
+      }
+
+      function interact(e){
+        interacting = true;
+        if(card.classList.contains('is-flipped')){
+          // No holo on the back side
+          setVars({ '--card-opacity': 0 });
+          return;
+        }
+        const rect = rotator.getBoundingClientRect();
+        const clientX = (e.touches? e.touches[0].clientX : e.clientX);
+        const clientY = (e.touches? e.touches[0].clientY : e.clientY);
+        const x = clamp(((clientX - rect.left) / rect.width) * 100);
+        const y = clamp(((clientY - rect.top) / rect.height) * 100);
+
+        const cx = x - 50;
+        const cy = y - 50;
+
+        const bgX = round(adjust(x, 0, 100, 37, 63));
+        const bgY = round(adjust(y, 0, 100, 33, 67));
+        const rotX = round(-(cx / 3.5));
+        const rotY = round(cy / 2);
+        const pLeft = round(x) / 100;
+        const pTop = round(y) / 100;
+        const pCenter = clamp(Math.sqrt((y - 50) * (y - 50) + (x - 50) * (x - 50)) / 50, 0, 1);
+
+        setVars({
+          '--pointer-x': x + '%',
+          '--pointer-y': y + '%',
+          '--background-x': bgX + '%',
+          '--background-y': bgY + '%',
+          '--rotate-x': rotX + 'deg',
+          '--rotate-y': rotY + 'deg',
+          '--card-opacity': 1,
+          '--pointer-from-left': pLeft,
+          '--pointer-from-top': pTop,
+          '--pointer-from-center': pCenter
+        });
+      }
+
+      function interactEnd(){
+        interacting = false;
+        setVars({
+          '--pointer-x': '50%',
+          '--pointer-y': '50%',
+          '--background-x': '50%',
+          '--background-y': '50%',
+          '--rotate-x': '0deg',
+          '--rotate-y': '0deg',
+          '--card-opacity': 0,
+          '--pointer-from-left': 0.5,
+          '--pointer-from-top': 0.5,
+          '--pointer-from-center': 0
+        });
+      }
+
+      rotator.addEventListener('pointermove', interact, { passive: true });
+      rotator.addEventListener('touchmove', interact, { passive: true });
+      rotator.addEventListener('pointerleave', interactEnd);
+      rotator.addEventListener('blur', interactEnd);
+
+      // Flip button wiring
+      function setFlipUI(){
+        const flipped = card.classList.contains('is-flipped');
+        if(!flipBtn) return;
+        flipBtn.textContent = flipped ? 'Show front' : 'Show back';
+        flipBtn.setAttribute('aria-pressed', flipped ? 'true' : 'false');
+        flipBtn.setAttribute('aria-label', flipped ? 'Show card front' : 'Show card back');
+      }
+      if(flipBtn){
+        flipBtn.addEventListener('click', () => {
+          const flippingToBack = !card.classList.contains('is-flipped');
+          card.classList.add('is-animating');
+          // force reflow so the transition is applied before flipping
+          void card.offsetWidth;
+          card.classList.toggle('is-flipped');
+          if(flippingToBack){
+            // ensure holo fades out when showing back
+            interactEnd();
+          }
+          // clear animating flag after transition duration
+          setTimeout(() => card.classList.remove('is-animating'), 650);
+          setFlipUI();
+        });
+        setFlipUI();
+      }
+    })();
+  </script>
+</body>
+</html>
