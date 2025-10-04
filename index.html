@@ -71,6 +71,37 @@
       transition: transform 0.1s ease-out; /* Smooth but fast transitions */
     }
     
+    /* CRITICAL: Mobile-specific holo masking to ONLY the art area */
+    .is-mobile .card__shine,
+    .is-mobile .card__glare {
+      /* Force strict masking to art image only on mobile */
+      -webkit-mask-image: var(--mask) !important;
+      mask-image: var(--mask) !important;
+      -webkit-mask-size: cover !important;
+      mask-size: cover !important;
+      -webkit-mask-position: center center !important;
+      mask-position: center center !important;
+      -webkit-mask-repeat: no-repeat !important;
+      mask-repeat: no-repeat !important;
+      
+      /* Additional containment */
+      contain: layout style paint !important;
+      isolation: isolate !important;
+    }
+    
+    /* Ensure frame layer is completely isolated on mobile */
+    .is-mobile .frame-layer,
+    .is-mobile .frame-layer * {
+      /* Completely isolate frame from any holo effects */
+      mix-blend-mode: normal !important;
+      filter: none !important;
+      backdrop-filter: none !important;
+      position: relative !important;
+      z-index: 100 !important; /* High z-index to ensure it's above holo */
+      isolation: isolate !important;
+      contain: layout style paint !important;
+    }
+    
     .is-mobile .card__shine {
       /* Full rainbow cosmos effect ONLY on card art area for mobile */
       background-image: 
@@ -108,9 +139,20 @@
       mix-blend-mode: color-dodge !important;
       opacity: 0.8;
       
-      /* CRITICAL: Only show holo on the card art area */
-      clip-path: var(--clip) !important;
-      -webkit-clip-path: var(--clip) !important;
+      /* CRITICAL: Force strict art masking */
+      -webkit-mask-image: var(--mask) !important;
+      mask-image: var(--mask) !important;
+      -webkit-mask-size: cover !important;
+      mask-size: cover !important;
+      -webkit-mask-position: center center !important;
+      mask-position: center center !important;
+      -webkit-mask-repeat: no-repeat !important;
+      mask-repeat: no-repeat !important;
+      
+      /* Containment for performance and isolation */
+      contain: layout style paint !important;
+      isolation: isolate !important;
+      z-index: 1 !important;
     }
     
     .is-mobile .card__shine:before,
@@ -130,9 +172,20 @@
       mix-blend-mode: overlay !important;
       filter: none !important;
       
-      /* CRITICAL: Only show glare on the card art area */
-      clip-path: var(--clip) !important;
-      -webkit-clip-path: var(--clip) !important;
+      /* CRITICAL: Force strict art masking */
+      -webkit-mask-image: var(--mask) !important;
+      mask-image: var(--mask) !important;
+      -webkit-mask-size: cover !important;
+      mask-size: cover !important;
+      -webkit-mask-position: center center !important;
+      mask-position: center center !important;
+      -webkit-mask-repeat: no-repeat !important;
+      mask-repeat: no-repeat !important;
+      
+      /* Containment for performance and isolation */
+      contain: layout style paint !important;
+      isolation: isolate !important;
+      z-index: 2 !important;
     }
     
     .is-mobile .card__glare:after {
@@ -262,6 +315,25 @@
     .card[data-rarity="rare holo cosmos"] .card__glare::before,
     .card[data-rarity="rare holo cosmos"] .card__glare::after {
       clip-path: none !important;
+    }
+    
+    /* MOBILE OVERRIDE: Force strict art-only masking on mobile devices */
+    .is-mobile .card[data-rarity="rare holo cosmos"] .card__shine,
+    .is-mobile .card[data-rarity="rare holo cosmos"] .card__shine::before,
+    .is-mobile .card[data-rarity="rare holo cosmos"] .card__shine::after,
+    .is-mobile .card[data-rarity="rare holo cosmos"] .card__glare,
+    .is-mobile .card[data-rarity="rare holo cosmos"] .card__glare::before,
+    .is-mobile .card[data-rarity="rare holo cosmos"] .card__glare::after {
+      /* Override the clip-path removal - force art masking on mobile */
+      -webkit-mask-image: var(--mask) !important;
+      mask-image: var(--mask) !important;
+      -webkit-mask-size: cover !important;
+      mask-size: cover !important;
+      -webkit-mask-position: center center !important;
+      mask-position: center center !important;
+      -webkit-mask-repeat: no-repeat !important;
+      mask-repeat: no-repeat !important;
+      clip-path: none !important; /* Keep this but rely on mask instead */
     }
     /* Ensure shine is masked to the art silhouette fully */
     .card.masked .card__shine,
