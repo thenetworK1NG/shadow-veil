@@ -40,9 +40,9 @@
     /* Mobile optimizations for better performance */
     @media (max-width: 768px), (hover: none) {
       .card {
-        /* Reduce transform complexity on mobile */
-        transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(var(--card-scale, 1));
-        will-change: auto; /* Let browser decide what to optimize */
+        /* Allow tilt but reduce complexity on mobile */
+        transform: perspective(1000px) rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg)) scale(var(--card-scale, 1));
+        will-change: transform; /* Only track transforms on mobile */
       }
       
       .card__shine,
@@ -65,9 +65,9 @@
     
     /* Enhanced mobile optimizations using class-based detection */
     .is-mobile .card {
-      /* Force hardware acceleration with simpler transforms */
-      transform: perspective(1000px) scale(var(--card-scale, 1));
-      will-change: auto;
+      /* Allow tilt transforms on mobile but simplify perspective */
+      transform: perspective(1000px) rotateX(var(--rotate-x, 0deg)) rotateY(var(--rotate-y, 0deg)) scale(var(--card-scale, 1));
+      will-change: transform; /* Only track transform changes on mobile */
     }
     
     .is-mobile .card__shine {
@@ -351,40 +351,51 @@
         // Add mobile class for CSS targeting
         document.documentElement.classList.add('is-mobile');
         
-        // Simplified interaction for mobile - only on touch, not continuous tracking
-        let touchTimeout;
-        
-        function simpleMobileInteract(e) {
+        // Mobile interaction with tilt but simplified holo effects
+        function mobileInteract(e) {
+          interacting = true;
           if (card.classList.contains('is-flipped')) {
             setVars({ '--card-opacity': 0 });
             return;
           }
           
-          clearTimeout(touchTimeout);
-          
-          // Simple center-based effect for mobile
+          const rect = rotator.getBoundingClientRect();
+          const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+          const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+          const x = clamp(((clientX - rect.left) / rect.width) * 100);
+          const y = clamp(((clientY - rect.top) / rect.height) * 100);
+
+          const cx = x - 50;
+          const cy = y - 50;
+
+          // Keep the tilt calculations for mobile
+          const bgX = round(adjust(x, 0, 100, 37, 63));
+          const bgY = round(adjust(y, 0, 100, 33, 67));
+          const rotX = round(-(cx / 3.5));
+          const rotY = round(cy / 2);
+          const pLeft = round(x) / 100;
+          const pTop = round(y) / 100;
+          const pCenter = clamp(Math.sqrt((y - 50) * (y - 50) + (x - 50) * (x - 50)) / 50, 0, 1);
+
           setVars({
-            '--pointer-x': '50%',
-            '--pointer-y': '50%',
-            '--background-x': '50%',
-            '--background-y': '50%',
-            '--rotate-x': '0deg',
-            '--rotate-y': '0deg',
-            '--card-opacity': 0.7, // Reduced opacity
-            '--pointer-from-left': 0.5,
-            '--pointer-from-top': 0.5,
-            '--pointer-from-center': 0.5
+            '--pointer-x': x + '%',
+            '--pointer-y': y + '%',
+            '--background-x': bgX + '%',
+            '--background-y': bgY + '%',
+            '--rotate-x': rotX + 'deg', // Keep tilt on mobile
+            '--rotate-y': rotY + 'deg', // Keep tilt on mobile
+            '--card-opacity': 0.7, // Reduced holo opacity for performance
+            '--pointer-from-left': pLeft,
+            '--pointer-from-top': pTop,
+            '--pointer-from-center': pCenter
           });
-          
-          // Auto-fade after touch
-          touchTimeout = setTimeout(interactEnd, 2000);
         }
         
-        rotator.addEventListener('touchstart', simpleMobileInteract, { passive: true });
-        rotator.addEventListener('touchend', () => {
-          clearTimeout(touchTimeout);
-          setTimeout(interactEnd, 500);
-        }, { passive: true });
+        // Use touchmove for continuous tracking (but with simplified CSS effects)
+        rotator.addEventListener('touchstart', mobileInteract, { passive: true });
+        rotator.addEventListener('touchmove', mobileInteract, { passive: true });
+        rotator.addEventListener('touchend', interactEnd, { passive: true });
+        rotator.addEventListener('touchcancel', interactEnd, { passive: true });
         
       } else {
         // Desktop: full interaction
