@@ -33,3 +33,35 @@
     background-position, background-blend-mode, filter;
  
 }
+
+/* Mobile performance optimizations */
+@media (max-width: 768px), (hover: none) {
+  .card__shine,
+  .card__glare {
+    /* Reduce will-change declarations on mobile to improve memory usage */
+    will-change: opacity;
+  }
+}
+
+/* Reduce complexity for mobile devices and touch interfaces */
+@media (hover: none) and (pointer: coarse) {
+  .card {
+    /* Simplify transforms for touch devices */
+    transform: perspective(1000px) scale(var(--card-scale, 1)) !important;
+  }
+  
+  .card__shine,
+  .card__glare {
+    /* Disable expensive operations on touch devices */
+    filter: brightness(1.1) !important;
+    mix-blend-mode: overlay !important;
+  }
+}
+
+/* Performance optimization for all small screens */
+@media (max-width: 480px) {
+  .card {
+    /* Further reduce complexity on very small screens */
+    will-change: auto;
+  }
+}

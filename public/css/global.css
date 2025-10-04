@@ -7,6 +7,28 @@
   box-sizing: border-box;
 }
 
+/* Mobile performance optimizations */
+@media (max-width: 768px) {
+  * {
+    /* Improve mobile scrolling performance */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  * {
+    /* Optimize for touch devices */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+}
+
 body,
 html {
   height: 100%;

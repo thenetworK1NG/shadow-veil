@@ -192,3 +192,52 @@
   opacity: calc( 1 - var(--pointer-from-top) * .75 );
 
 }
+
+/* Mobile optimizations for cosmos holo effect */
+@media (max-width: 768px), (hover: none) {
+  .card[data-rarity="rare holo cosmos"] .card__shine {
+    /* Simplified background for mobile */
+    background-image: url("../../img/cosmos-bottom.png") !important;
+    background-blend-mode: multiply !important;
+    background-position: center !important;
+    background-size: cover !important;
+    filter: brightness(1.2) !important;
+    mix-blend-mode: overlay !important;
+  }
+
+  .card[data-rarity="rare holo cosmos"] .card__shine:before,
+  .card[data-rarity="rare holo cosmos"] .card__shine:after {
+    /* Disable pseudo-elements on mobile for better performance */
+    display: none !important;
+  }
+  
+  .card[data-rarity="rare holo cosmos"] .card__glare {
+    /* Simplified glare for mobile */
+    background: radial-gradient(
+      circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.1) 30%,
+      transparent 60%
+    ) !important;
+    filter: none !important;
+    mix-blend-mode: overlay !important;
+  }
+  
+  .card[data-rarity="rare holo cosmos"] .card__glare:after {
+    display: none !important;
+  }
+}
+
+/* Further optimizations for very small screens */
+@media (max-width: 480px) {
+  .card[data-rarity="rare holo cosmos"] .card__shine {
+    /* Even more simplified for small screens */
+    background-image: none !important;
+    background: linear-gradient(45deg, 
+      rgba(255, 255, 255, 0.1) 0%, 
+      rgba(255, 255, 255, 0.2) 50%, 
+      rgba(255, 255, 255, 0.1) 100%) !important;
+    filter: none !important;
+    mix-blend-mode: overlay !important;
+  }
+}
